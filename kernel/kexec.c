@@ -104,6 +104,12 @@ out_free_image:
 	return ret;
 }
 
+bool __weak arch_kexec_is_hardboot_buffer_range(unsigned long s,
+	unsigned long e)
+{
+	return false;
+}
+
 static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
 		struct kexec_segment __user *segments, unsigned long flags)
 {
@@ -139,6 +145,11 @@ static int do_kexec_load(unsigned long entry, unsigned long nr_segments,
 
 	if (flags & KEXEC_PRESERVE_CONTEXT)
 		image->preserve_context = 1;
+
+#ifdef CONFIG_KEXEC_HARDBOOT
+		if (flags & KEXEC_HARDBOOT)
+			image->hardboot = 1;
+#endif
 
 	ret = machine_kexec_prepare(image);
 	if (ret)

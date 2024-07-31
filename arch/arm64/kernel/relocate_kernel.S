@@ -17,6 +17,17 @@
 #include <asm/page.h>
 #include <asm/sysreg.h>
 
+#define IND_DESTINATION_BIT	0
+#define IND_INDIRECTION_BIT	1
+#define IND_DONE_BIT		2
+#define IND_SOURCE_BIT		3
+
+#ifdef CONFIG_KEXEC_HARDBOOT
+// SM6150 specific
+#define MPM2_MPM_PS_HOLD	0xc264000
+#endif
+
+
 /*
  * arm64_relocate_new_kernel - Put a 2nd stage image in place and boot it.
  *
@@ -30,6 +41,10 @@
  * during the copy operation.
  */
 ENTRY(arm64_relocate_new_kernel)
+
+	ldr	x22, =KEXEC_HB_PAGE_ADDR
+	ldr	x23, =(0xdeaf0000)
+	str	x23, [x22]
 
 	/* Setup the list loop variables. */
 	//mov	x17, x1				/* x17 = kimage_start */
@@ -98,6 +113,11 @@ ENTRY(arm64_relocate_new_kernel)
 	/* entry = *ptr++ */
 	ldr	x16, [x14], #8
 
+	ldr	x22, =KEXEC_HB_PAGE_ADDR
+	ldr	x23, [x22]
+	add	x23, x23, #1
+	str	x23, [x22]
+
 	/* while (!(entry & DONE)) */
 	tbz	x16, IND_DONE_BIT, .Lloop
 
@@ -108,22 +128,47 @@ ENTRY(arm64_relocate_new_kernel)
 	dsb	nsh
 	isb
 
+#ifdef CONFIG_KEXEC_HARDBOOT
+	ldr	x0, arm64_kexec_hardboot
+	cbnz	x0, hardboot
+#endif
+	ldr	x22, =KEXEC_HB_PAGE_ADDR
+	ldr	x23, =(0xfeedf00d)
+	str	x23, [x22]
+
 	/* Start new image. */
 	ldr x4, arm64_kexec_kimage_start
 	ldr x0, arm64_kexec_dtb_addr
+	str	x4, [x22, #8]
+	str	x0, [x22, #16]
+	str	xzr, [x22, #24]
 	mov	x1, xzr
 	mov	x2, xzr
 	mov	x3, xzr
 	br	x4
+
+#ifdef CONFIG_KEXEC_HARDBOOT
+hardboot:
+	/* Stash boot arguments in hardboot page:
+	 * 0: KEXEC_HB_PAGE_MAGIC
+	 * 8: kexec_kimage_start
+	 */
+	ldr	x0, =KEXEC_HB_PAGE_ADDR
+	ldr	x1, =KEXEC_HB_PAGE_MAGIC
+	str	x1, [x0]
+	/* Processor specific reboot code. */
+	/* MSM8994/Snapdragon 810 version. */
+	ldr	x0, =MPM2_MPM_PS_HOLD
+	str	xzr, [x0]
+loop:	b	loop
+//.ltorg
+#endif
 
 ENDPROC(arm64_relocate_new_kernel)
 
 .ltorg
 
 .align 3	/* To keep the 64-bit values below naturally aligned. */
-
-.Lcopy_end:
-.org	KEXEC_CONTROL_PAGE_SIZE
 
 /*
  * arm64_relocate_new_kernel_size - Number of bytes to copy to the
@@ -155,3 +200,12 @@ arm64_kexec_dtb_addr:
 arm64_kexec_kimage_head:
 	.quad	0x0
 
+/*
+ * arm64_kexec_hardboot - set to true if booting in hardboot mode
+ */
+.globl arm64_kexec_hardboot
+arm64_kexec_hardboot:
+	.quad	0x0
+
+.Lcopy_end:
+.org	KEXEC_CONTROL_PAGE_SIZE
