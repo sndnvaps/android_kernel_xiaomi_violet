@@ -397,7 +397,7 @@ void machine_kexec(struct kimage *kimage)
 			hardboot_list_loc_virt, tempdest);
 
 		// setup post-reboot reloc code
-		arm64_kexec_kimage_head = post_reboot_list_loc;
+		arm64_kexec_kimage_head = IND_INDIRECTION | post_reboot_list_loc;
 		arm64_kexec_hardboot = 0;
 
 		// copy relocation code to hardboot page for post-reboot reloc
