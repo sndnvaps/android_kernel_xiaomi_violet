@@ -164,7 +164,7 @@ hardboot:
 	ldr	x1, =KEXEC_HB_PAGE_MAGIC
 	str	x1, [x0]
 	/* Processor specific reboot code. */
-	/* MSM8994/Snapdragon 810 version. */
+	/* "xiaomi,violet", "qcom,sm6150" */
 	ldr	x0, =MPM2_MPM_PS_HOLD
 	str	xzr, [x0]
 loop:	b	loop

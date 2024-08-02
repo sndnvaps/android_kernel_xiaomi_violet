@@ -31,7 +31,7 @@
 #ifdef CONFIG_KEXEC_HARDBOOT
 #define KEXEC_HB_PAGE_MAGIC 0x4a5db007
 // Hardboot: Xiaomi Redmi Note 7 pro (violet). Address reserved in device tree.
-#define KEXEC_HB_PAGE_ADDR UL()
+#define KEXEC_HB_PAGE_ADDR UL(0xA0300000)
 #endif
 
 #ifndef __ASSEMBLY__
