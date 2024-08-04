@@ -156,7 +156,7 @@ static ssize_t pstore_file_write(struct file *file, const char __user *userbuf,
 	if (!count || !userbuf)
 		return 0;
 
-	if (ps->type != PSTORE_TYPE_ANNOTATE)
+	if (ps->record->type != PSTORE_TYPE_ANNOTATE)
 		return count;
 
 	if (count > PSTORE_ANNOTATE_MAX_SIZE)
@@ -408,7 +408,7 @@ int pstore_mkfile(struct dentry *root, struct pstore_record *record)
 			  record->psi->name, record->id);
 		break;
 	case PSTORE_TYPE_ANNOTATE:
-		snprintf(name, sizeof(name), "annotate-%s", psname);
+		snprintf(name, sizeof(name), "annotate-%s", record->psi->name);
 		break;
 	case PSTORE_TYPE_PPC_OPAL:
 		scnprintf(name, sizeof(name), "powerpc-opal-%s-%llu",

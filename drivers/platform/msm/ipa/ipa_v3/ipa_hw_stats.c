@@ -1536,7 +1536,7 @@ static ssize_t ipa_debugfs_reset_quota_stats(struct file *file,
 		goto bail;
 	}
 
-	missing = copy_from_user(dbg_buff, ubuf, count);
+	missing = copy_from_user(dbg_buff, ubuf, min(sizeof(dbg_buff), count));
 	if (missing) {
 		ret = -EFAULT;
 		goto bail;
@@ -1635,7 +1635,7 @@ static ssize_t ipa_debugfs_reset_tethering_stats(struct file *file,
 		goto bail;
 	}
 
-	missing = copy_from_user(dbg_buff, ubuf, count);
+	missing = copy_from_user(dbg_buff, ubuf, min(sizeof(dbg_buff), count));
 	if (missing) {
 		ret = -EFAULT;
 		goto bail;
@@ -1753,7 +1753,7 @@ static ssize_t ipa_debugfs_control_flt_rt_stats(enum ipa_ip_type ip,
 		goto bail;
 	}
 
-	missing = copy_from_user(dbg_buff, ubuf, count);
+	missing = copy_from_user(dbg_buff, ubuf, min(sizeof(dbg_buff), count));
 	if (missing) {
 		ret = -EFAULT;
 		goto bail;
@@ -1846,7 +1846,7 @@ static ssize_t ipa_debugfs_reset_drop_stats(struct file *file,
 		goto bail;
 	}
 
-	missing = copy_from_user(dbg_buff, ubuf, count);
+	missing = copy_from_user(dbg_buff, ubuf, min(sizeof(dbg_buff), count));
 	if (missing) {
 		ret = -EFAULT;
 		goto bail;

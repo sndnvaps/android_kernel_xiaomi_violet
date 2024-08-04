@@ -22,7 +22,7 @@ static const int bypass_purgatory = 1;
 
 #include <linux/page-flags.h>
 #include <linux/smp.h>
-
+#include <linux/uaccess.h>
 #include <asm/cacheflush.h>
 #include <asm/cpu_ops.h>
 #include <asm/memory.h>
@@ -165,7 +165,7 @@ static void _kexec_image_info(const char *func, int line,
 			kimage->segment[i].mem + kimage->segment[i].memsz,
 			kimage->segment[i].memsz,
 			kimage->segment[i].memsz /  PAGE_SIZE,
-			(kexec_is_dtb(image->segment[i].buf) ?
+			(kexec_is_dtb(kimage->segment[i].buf) ?
 			", dtb segment" : ""));
 	}
 }
@@ -187,22 +187,23 @@ int machine_kexec_prepare(struct kimage *kimage)
 	unsigned long *hardboot_page;
 	kexec_image_info(kimage);
 	
-	fill_bypass(image);
+	fill_bypass(kimage);
 	if (bypass_purgatory) {
 		arm64_kexec_kimage_start = bypass.kernel;
 		arm64_kexec_dtb_addr = bypass.dtb;
 	} else {
-		arm64_kexec_kimage_start = image->start;
+		arm64_kexec_kimage_start = kimage->start;
 		arm64_kexec_dtb_addr = 0;
 	}
 
 #ifdef CONFIG_KEXEC_HARDBOOT
-	arm64_kexec_hardboot = image->hardboot;
-#endif
+	arm64_kexec_hardboot = kimage->hardboot;
+
 	// debug; please remove
 	hardboot_page = ioremap(KEXEC_HB_PAGE_ADDR, SZ_1M);
 	pr_info("Last hardboot status: %lx\n", hardboot_page[0]);
 	iounmap(hardboot_page);
+#endif
 
 	if (kimage->type != KEXEC_TYPE_CRASH && cpus_are_stuck_in_kernel()) {
 		pr_err("Can't kexec: CPUs are stuck in the kernel.\n");
@@ -375,7 +376,7 @@ void machine_kexec(struct kimage *kimage)
 		arm64_relocate_new_kernel_size);
 
 #ifdef CONFIG_KEXEC_HARDBOOT
-	if (image->hardboot) {
+	if (kimage->hardboot) {
 		// hardboot reserve should be 1MB.
 		unsigned long hardboot_reserve = KEXEC_HB_PAGE_ADDR;
 		void *hardboot_map = ioremap(hardboot_reserve, SZ_1M);
@@ -393,7 +394,7 @@ void machine_kexec(struct kimage *kimage)
 
 		// create new relocation list for post reboot reloc
 		// TODO: check for overflow of temp space and hardboot page
-		kexec_list_hardboot_create_post_reboot_list(image->head,
+		kexec_list_hardboot_create_post_reboot_list(kimage->head,
 			hardboot_list_loc_virt, tempdest);
 
 		// setup post-reboot reloc code
@@ -401,8 +402,8 @@ void machine_kexec(struct kimage *kimage)
 		arm64_kexec_hardboot = 0;
 
 		// copy relocation code to hardboot page for post-reboot reloc
-		memcpy(post_reboot_code_buffer, relocate_new_kernel,
-			relocate_new_kernel_size);
+		memcpy(post_reboot_code_buffer, arm64_relocate_new_kernel,
+			arm64_relocate_new_kernel_size);
 
 		// flush the entire hardboot page
 		__flush_dcache_area(hardboot_map, SZ_1M);
@@ -417,7 +418,7 @@ void machine_kexec(struct kimage *kimage)
 
 #ifdef CONFIG_KEXEC_HARDBOOT
 	/* Run any final machine-specific shutdown code. */
-	if (image->hardboot && kexec_hardboot_hook)
+	if (kimage->hardboot && kexec_hardboot_hook)
 		kexec_hardboot_hook();
 #endif
 
@@ -439,7 +440,7 @@ void machine_kexec(struct kimage *kimage)
 	 * relocation is complete.
 	 */
 
-	cpu_soft_restart(kimage != kexec_crash_image,
+	cpu_soft_restart_kexec(kimage != kexec_crash_image,
 		reboot_code_buffer_phys, kimage->head, kimage->start, 0);
 
 	BUG(); /* Should never get here. */

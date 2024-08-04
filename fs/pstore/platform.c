@@ -590,16 +590,18 @@ int  pstore_annotate(const char *buf)
 {
 	unsigned cnt = strlen(buf);
 	const char *end = buf + cnt;
+	struct pstore_record record;
 
 	if (!psinfo) {
 		pr_warn("device not present!\n");
 		return -ENODEV;
 	}
 
+	pstore_record_init(&record, psinfo);
+
 	while (buf < end) {
 		unsigned long flags;
 		int ret;
-		u64 id;
 
 		if (cnt > psinfo->bufsize)
 			cnt = psinfo->bufsize;
@@ -611,8 +613,10 @@ int  pstore_annotate(const char *buf)
 			spin_lock_irqsave(&psinfo->buf_lock, flags);
 		}
 		memcpy(psinfo->buf, buf, cnt);
-		ret = psinfo->write(PSTORE_TYPE_ANNOTATE, 0, &id, 0, 0,
-			cnt, psinfo);
+		record.type = PSTORE_TYPE_ANNOTATE;
+		record.buf = (char *)buf;
+		record.size = cnt;
+		ret = psinfo->write(&record);
 		spin_unlock_irqrestore(&psinfo->buf_lock, flags);
 
 		pr_debug("ret %d wrote bytes %d\n", ret, cnt);

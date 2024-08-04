@@ -293,7 +293,7 @@ static ssize_t ramoops_pstore_read(struct pstore_record *record)
 
 	if (!prz_ok(prz)) {
 		prz = ramoops_get_next_prz(&cxt->aprz, &cxt->annotate_read_cnt,
-					1, id, type, PSTORE_TYPE_ANNOTATE, 0);
+					1, &record->id, &record->type, PSTORE_TYPE_ANNOTATE, 0);
 		persistent_ram_annotation_merge(prz);
 	}
 	/* ftrace is last since it may want to dynamically allocate memory. */
@@ -418,10 +418,10 @@ static int notrace ramoops_pstore_write(struct pstore_record *record)
 	} else if (record->type == PSTORE_TYPE_PMSG) {
 		pr_warn_ratelimited("PMSG shouldn't call %s\n", __func__);
 		return -EINVAL;
-	} else if (type == PSTORE_TYPE_ANNOTATE) {
+	} else if (record->type == PSTORE_TYPE_ANNOTATE) {
 		if (!cxt->aprz)
 			return -ENOMEM;
-		persistent_ram_write(cxt->aprz, buf, size);
+		persistent_ram_write(cxt->aprz, record->buf, record->size);
 		return 0;
 	}
 
@@ -432,7 +432,7 @@ static int notrace ramoops_pstore_write(struct pstore_record *record)
 	 * Out of the various dmesg dump types, ramoops is currently designed
 	 * to only store crash logs, rather than storing general kernel logs.
 	 */
-	if (reason != KMSG_DUMP_PANIC)
+	if (record->reason != KMSG_DUMP_PANIC)
 		return -EINVAL;
 
 	/* Skip Oopes when configured to do so. */
@@ -790,7 +790,7 @@ static int ramoops_probe(struct platform_device *pdev)
 	if (pdata->pmsg_size && !is_power_of_2(pdata->pmsg_size))
 		pdata->pmsg_size = rounddown_pow_of_two(pdata->pmsg_size);
 	if (pdata->annotate_size && !is_power_of_2(pdata->annotate_size))
-		pdata->annotate_size = rounddown_pow_of_2(pdata->annotate_size);
+		pdata->annotate_size = rounddown_pow_of_two(pdata->annotate_size);
 
 	pr_debug("All %#lx record %#lx console %#lx ftrace %#lx annotate %#lx\n",
 		pdata->mem_size, pdata->record_size, pdata->console_size,

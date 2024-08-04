@@ -27,6 +27,7 @@
 #define MPM2_MPM_PS_HOLD	0xc264000
 #endif
 
+.data
 
 /*
  * arm64_relocate_new_kernel - Put a 2nd stage image in place and boot it.
