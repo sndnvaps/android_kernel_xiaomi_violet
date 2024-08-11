@@ -22,7 +22,7 @@
 
 / {
 	model = "IDP";
-	compatible = "qcom,sm6150-idp", "qcom,sm6150", "qcom,idp";
+	compatible = "qcom,sm6150-idp", "qcom,sm6150", "qcom,idp", "xiaomi,violet";
 	qcom,msm-id = <355 0x0>;
 	qcom,board-id = <34 0>;
 };

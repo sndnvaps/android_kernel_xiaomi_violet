@@ -665,15 +665,21 @@
 			size = <0 0x2000000>;
 			linux,cma-default;
 		};
+		/*  Hardboot reserve at 0xA0400000
+		 * Size = 1MB
+		 */
+		kexec_hardboot_mem: kexec_hardboot_region@a0400000 {
+			compatible = "removed-dma-pool";
+			no-map;
+			reg = <0x0 0xA0400000 0x0 0x00100000>;
+			label = "kexec_hardboot_region";
+		};
 
-		ramoops_mem: ramoops_mem_region {
-			linux,reserve-contiguous-region;
-			linux,reserve-region;
-			linux,remove-completely;
-			/* Hardboot: reserve 1MB of space
-			 * before ramoops address of 0xA0400000
-			*/
-			reg = <0x0 0xA0300000 0x0 0x00500000>;
+		ramoops_mem: ramoops@a0500000 {
+			compatible = "removed-dma-pool";
+			no-map;
+			/* reserve 9 MB for ramoops */
+			reg = <0x0 0xA0500000 0x0 0x00400000>;
 			label = "ramoops_mem";
 		};
 
@@ -690,13 +696,12 @@
 	ramoops {
 		compatible = "ramoops";
 		status = "ok";
-
-		android,ramoops-buffer-start = <0xA0300000>;
-		android,ramoops-buffer-size = <0x500000>;
-		android,ramoops-console-size = <0x80000>;
-		android,ramoops-record-size = <0x20000>;
-		android,ramoops-dump-oops = <0x1>;
-		linux,contiguous-region = <&ramoops_mem>;
+		record-size = <0x30000>;
+		console-size = <0xc0000>;
+		ftrace-size = <0x30000>;
+		pmsg-size = <0x50000>;
+		annotate-size = <0x800>;
+		memory-region = <&ramoops_mem>;
 	};
 
 

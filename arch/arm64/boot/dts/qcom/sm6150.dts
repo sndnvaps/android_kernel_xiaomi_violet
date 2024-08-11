@@ -16,7 +16,7 @@
 
 / {
 	model = "Qualcomm Technologies, Inc. SM6150 SoC";
-	compatible = "qcom,sm6150";
+	compatible = "qcom,sm6150", "xiaomi,violet";
 	qcom,pmic-name = "PM6150";
 	qcom,board-id = <0 0>;
 };
