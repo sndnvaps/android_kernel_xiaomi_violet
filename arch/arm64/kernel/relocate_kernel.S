@@ -54,7 +54,7 @@ first_not_hardboot:
 	/* Setup the list loop variables. */
 	//mov	x17, x1				/* x17 = kimage_start */
 	//mov	x16, x0				/* x16 = kimage_head */
-	ldr x17, arm64_kexec_kimage_start /* x17 = kimage_start */
+	//ldr x17, arm64_kexec_kimage_start /* x17 = kimage_start */
 	ldr x16, arm64_kexec_kimage_head /* x16 = kimage_head */
 	raw_dcache_line_size x15, x0		/* x15 = dcache line size */
 	mov	x14, xzr			/* x14 = entry ptr */
@@ -73,6 +73,7 @@ first_not_hardboot:
 1:
 
 	/* Check if the new image needs relocation. */
+	cbz 	x16, .Ldone
 	tbnz	x16, IND_DONE_BIT, .Ldone
 
 .Lloop:
@@ -145,15 +146,15 @@ second_not_hardboot:
 	str	x23, [x22]
 
 	/* Start new image. */
-	ldr x4, arm64_kexec_kimage_start
+	ldr x17, arm64_kexec_kimage_start
 	ldr x0, arm64_kexec_dtb_addr
-	str	x4, [x22, #8]
+	str	x17, [x22, #8]
 	str	x0, [x22, #16]
 	str	xzr, [x22, #24]
 	mov	x1, xzr
 	mov	x2, xzr
 	mov	x3, xzr
-	br	x4
+	br	x17
 
 #ifdef CONFIG_KEXEC_HARDBOOT
 hardboot:
