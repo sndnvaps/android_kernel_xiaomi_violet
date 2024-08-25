@@ -88,3 +88,12 @@ config PROC_UID
 	depends on PROC_FS && RT_MUTEXES
 	help
 	Provides aggregated per-uid information under /proc/uid.
+
+config PROC_RAM_CONSOLE
+	bool "save kernel console messages to /proc/last_kmsg, when reboot"
+	default n
+	depends on PSTORE
+	depends on PROC_FS
+	help
+	  When the option is enabled, pstore will log all kernel
+	  messages, even if no oops or panic happened.

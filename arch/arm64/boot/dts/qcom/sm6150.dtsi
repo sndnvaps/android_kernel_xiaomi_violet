@@ -665,23 +665,6 @@
 			size = <0 0x2000000>;
 			linux,cma-default;
 		};
-		/*  Hardboot reserve at 0xA0400000
-		 * Size = 1MB
-		 */
-		kexec_hardboot_mem: kexec_hardboot_region@a0400000 {
-			compatible = "removed-dma-pool";
-			no-map;
-			reg = <0x0 0xA0400000 0x0 0x00100000>;
-			label = "kexec_hardboot_region";
-		};
-
-		ramoops_mem: ramoops@a0500000 {
-			compatible = "removed-dma-pool";
-			no-map;
-			/* reserve 9 MB for ramoops */
-			reg = <0x0 0xA0500000 0x0 0x00400000>;
-			label = "ramoops_mem";
-		};
 
 
 	};
@@ -692,18 +675,6 @@
 	#size-cells = <1>;
 	ranges = <0 0 0 0xffffffff>;
 	compatible = "simple-bus";
-
-	ramoops {
-		compatible = "ramoops";
-		status = "ok";
-		record-size = <0x30000>;
-		console-size = <0xc0000>;
-		ftrace-size = <0x30000>;
-		pmsg-size = <0x50000>;
-		annotate-size = <0x800>;
-		memory-region = <&ramoops_mem>;
-	};
-
 
 	intc: interrupt-controller@17a00000 {
 		compatible = "arm,gic-v3";
@@ -723,6 +694,23 @@
 		#interrupt-cells = <3>;
 		interrupt-parent = <&intc>;
 		interrupt-controller;
+	};
+
+	ramoops_mem: ramoops_region@a0400000 {
+		compatible = "ramoops";
+		record-size = <0x30000>;
+		console-size = <0xc0000>;
+		ftrace-size = <0x30000>;
+		pmsg-size = <0x50000>;
+		annotate-size = <0x800>;
+		/* reserve 4 MB for ramoops */
+		reg = <0xA0400000 0x00400000>;
+	};
+
+	/* Reserve 1MB for the last_kmsg */
+	ram_console_mem: ram_console_region@a0800000 {
+		compatible = "ram_console";
+		reg = <0xA0800000 0x00100000>;
 	};
 
 	qcom,memshare {
